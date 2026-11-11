@@ -19,6 +19,7 @@
 @property (nonatomic) NSInteger logIndex;
 @property (nonatomic) BOOL running;
 @property (nonatomic) BOOL launched;
+@property (nonatomic, strong) UIView *fadeOverlay;
 
 @end
 
@@ -72,6 +73,13 @@
     ]];
 
     [self setupStack];
+
+    _fadeOverlay = [[UIView alloc] initWithFrame:self.view.bounds];
+    _fadeOverlay.backgroundColor = [UIColor blackColor];
+    _fadeOverlay.alpha = 0.0;
+    _fadeOverlay.userInteractionEnabled = NO;
+    _fadeOverlay.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    [self.view addSubview:_fadeOverlay];
 }
 
 - (void)setupStack {
@@ -257,7 +265,7 @@
     _logTimer = [NSTimer timerWithTimeInterval:0.09 target:self selector:@selector(pushLogLine) userInfo:nil repeats:YES];
     [[NSRunLoop mainRunLoop] addTimer:_logTimer forMode:NSRunLoopCommonModes];
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self finishFlow];
     });
 }
@@ -275,17 +283,31 @@
     [_jailbreakBtn.logView finishWithText:@"Success"];
     [[[UINotificationFeedbackGenerator alloc] init] notificationOccurred:UINotificationFeedbackTypeSuccess];
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.6 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self openEnvironment];
     });
 }
 
 - (void)openEnvironment {
     _launched = YES;
+
+    // Fade to black before handing off: Nyxian's launch screen is black, so the system
+    // app switch reads as a single cut instead of sliding out of this app.
+    [UIView animateWithDuration:0.12 delay:0 options:UIViewAnimationOptionCurveEaseIn animations:^{
+        self.fadeOverlay.alpha = 1.0;
+    } completion:^(BOOL finished) {
+        [self fireURL];
+    }];
+}
+
+- (void)fireURL {
     NSURL *url = [NSURL URLWithString:@"livecontainer://"];
     [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:^(BOOL success) {
         if (!success) {
             self.launched = NO;
+            [UIView animateWithDuration:0.2 animations:^{
+                self.fadeOverlay.alpha = 0.0;
+            }];
             UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Error"
                                                                            message:@"Nyxian did not respond. Try again."
                                                                     preferredStyle:UIAlertControllerStyleAlert];
