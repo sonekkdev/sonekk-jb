@@ -21,15 +21,29 @@ $appDir = Join-Path $out 'Payload\SonekkJB.app'
 New-Item -ItemType Directory -Path $appDir -Force | Out-Null
 
 $binary = Join-Path $appDir 'SonekkJB'
-& $clang -target arm64-apple-ios16.0 -isysroot $sdk -fobjc-arc -O2 `
-    (Join-Path $src 'main.m') (Join-Path $src 'JBViewController.m') `
+$sources = @(
+    (Join-Path $src 'main.m'),
+    (Join-Path $src 'JBViewController.m'),
+    (Join-Path $src 'JBJailbreakButton.m')
+) + (Get-ChildItem (Join-Path $src 'dopamine') -Filter *.m | ForEach-Object { $_.FullName })
+
+& $clang -target arm64-apple-ios16.0 -isysroot $sdk -fobjc-arc -O2 -Wno-deprecated-declarations `
+    -I (Join-Path $src 'dopamine') -I $src `
+    $sources `
     -framework UIKit -framework Foundation -framework QuartzCore `
-    -framework CoreGraphics `
+    -framework CoreGraphics -framework CoreImage `
     -o $binary
 if ($LASTEXITCODE -ne 0) { throw "compile failed: $LASTEXITCODE" }
 
 Copy-Item (Join-Path $src 'Info.plist') (Join-Path $appDir 'Info.plist')
 Set-Content -Path (Join-Path $appDir 'PkgInfo') -Value 'APPL????' -NoNewline -Encoding ascii
+
+# Dopamine-derived resources: background photo, spinner, blur mask, theme plist.
+$resources = Join-Path $root 'Resources'
+if (Test-Path $resources) {
+    Copy-Item (Join-Path $resources '*') $appDir -Force
+}
+Copy-Item (Join-Path $src 'dopamine\Themes.plist') $appDir -Force
 
 # App icons: dark teal tile with a glowing white S.
 Add-Type -AssemblyName System.Drawing
