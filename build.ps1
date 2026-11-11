@@ -49,39 +49,64 @@ Copy-Item (Join-Path $src 'dopamine\Themes.plist') $appDir -Force
 Add-Type -AssemblyName System.Drawing
 
 function New-AppIcon {
-    param([string]$Path, [int]$Size)
+    param([string]$OutPath, [int]$Size)
 
     $bitmap = New-Object System.Drawing.Bitmap $Size, $Size
     $g = [System.Drawing.Graphics]::FromImage($bitmap)
     $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
-    $g.TextRenderingHint = [System.Drawing.Text.TextRenderingHint]::AntiAlias
+    $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality
 
+    # Deep blue field.
     $rect = New-Object System.Drawing.Rectangle 0, 0, $Size, $Size
     $brush = New-Object System.Drawing.Drawing2D.LinearGradientBrush $rect,
-        ([System.Drawing.Color]::FromArgb(255, 12, 40, 26)),
-        ([System.Drawing.Color]::FromArgb(255, 3, 12, 9)), 60
+        ([System.Drawing.Color]::FromArgb(255, 11, 46, 82)),
+        ([System.Drawing.Color]::FromArgb(255, 3, 10, 22)), 55
     $g.FillRectangle($brush, $rect)
 
-    $glow = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(46, 51, 242, 128))
-    $glowRect = New-Object System.Drawing.Rectangle ([int]($Size * 0.08)), ([int]($Size * 0.08)), ([int]($Size * 0.84)), ([int]($Size * 0.84))
+    # Cyan glow behind the mark.
+    $glowRect = New-Object System.Drawing.Rectangle ([int]($Size * 0.02)), ([int]($Size * 0.02)), ([int]($Size * 0.96)), ([int]($Size * 0.96))
+    $glow = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(26, 46, 170, 255))
     $g.FillEllipse($glow, $glowRect)
 
-    $font = New-Object System.Drawing.Font 'Segoe UI', ([single]($Size * 0.50)), ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
-    $format = New-Object System.Drawing.StringFormat
-    $format.Alignment = [System.Drawing.StringAlignment]::Center
-    $format.LineAlignment = [System.Drawing.StringAlignment]::Center
-    $ink = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(240, 255, 255, 255))
-    $textRect = New-Object System.Drawing.RectangleF 0, 0, $Size, $Size
-    $g.DrawString('S', $font, $ink, $textRect, $format)
+    # Spiral mark: 2.6 turns, opening to the right.
+    $cx = $Size * 0.5
+    $cy = $Size * 0.5
+    $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+    $hasPrev = $false
+    $prevX = 0.0
+    $prevY = 0.0
+    for ($t = 0.0; $t -le 2.55 * [Math]::PI; $t += 0.06) {
+        $r = $Size * (0.050 + 0.0415 * $t)
+        $x = $cx + $r * [Math]::Cos($t - [Math]::PI / 2)
+        $y = $cy + $r * [Math]::Sin($t - [Math]::PI / 2)
+        if ($hasPrev) {
+            $path.AddLine([single]$prevX, [single]$prevY, [single]$x, [single]$y)
+        }
+        $prevX = $x
+        $prevY = $y
+        $hasPrev = $true
+    }
+
+    $halo = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(90, 64, 200, 255)), ([single]($Size * 0.150))
+    $halo.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $halo.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $halo.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+    $g.DrawPath($halo, $path)
+
+    $ink = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(250, 255, 255, 255)), ([single]($Size * 0.072))
+    $ink.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $ink.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+    $ink.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+    $g.DrawPath($ink, $path)
 
     $g.Dispose()
-    $bitmap.Save($Path, [System.Drawing.Imaging.ImageFormat]::Png)
+    $bitmap.Save($OutPath, [System.Drawing.Imaging.ImageFormat]::Png)
     $bitmap.Dispose()
 }
 
-New-AppIcon -Path (Join-Path $appDir 'AppIcon60x60@2x.png') -Size 120
-New-AppIcon -Path (Join-Path $appDir 'AppIcon60x60@3x.png') -Size 180
-New-AppIcon -Path (Join-Path $appDir 'AppIcon1024.png') -Size 1024
+New-AppIcon -OutPath (Join-Path $appDir 'AppIcon60x60@2x.png') -Size 120
+New-AppIcon -OutPath (Join-Path $appDir 'AppIcon60x60@3x.png') -Size 180
+New-AppIcon -OutPath (Join-Path $appDir 'AppIcon1024.png') -Size 1024
 
 $ipa = Join-Path $root 'SonekkJB.ipa'
 if (Test-Path $ipa) { Remove-Item $ipa -Force }

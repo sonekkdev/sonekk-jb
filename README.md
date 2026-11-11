@@ -1,6 +1,6 @@
-# Sonekk JB
+# Sonekk
 
-A Dopamine-style launcher for Nyxian Clean on non-jailbroken iOS: one button runs the
+A Dopamine-style launcher for Nyxian Clean, blue theme on non-jailbroken iOS: one button runs the
 session sequence and deep-links into Nyxian.
 
 ## UI
@@ -18,7 +18,7 @@ The interface is a direct port of Dopamine's Objective-C UI, not a look-alike:
 | `JBJailbreakButton` | `DOJailbreakButton` without the DOUIManager dependency |
 | `DOMainViewController` layout | stack view, 30pt padding, 73pt rows, 60pt button placeholder |
 
-`Background_Green.jpg`, `Loading.png`, `alpha-gradient.png` and `Themes.plist` come from the
+`Background_Blue.jpg`, `Loading.png`, `alpha-gradient.png` and `Themes.plist` come from the
 same repository. Dopamine is MIT licensed (c) 2023-2024 Lars Fröder (opa334); the license text
 is in `LICENSE.md`.
 

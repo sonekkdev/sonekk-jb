@@ -56,10 +56,12 @@
         [view removeFromSuperview];
     }
 
-    UIImageView *background = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Background_Green"]];
+    DOTheme *theme = [[DOThemeManager sharedInstance] enabledTheme];
+    UIImageView *background = [[UIImageView alloc] initWithImage:[theme image]];
     background.contentMode = UIViewContentModeScaleAspectFill;
     background.clipsToBounds = YES;
     background.userInteractionEnabled = NO;
+    background.layer.zPosition = -1;
     background.translatesAutoresizingMaskIntoConstraints = NO;
     [self.view insertSubview:background atIndex:0];
     [NSLayoutConstraint activateConstraints:@[
@@ -94,7 +96,7 @@
                                             subtitles:@[
         [DOGlobalAppearance mainSubtitleString:[NSString stringWithFormat:@"%@ · iOS %@",
                                                 [self machineIdentifier], [UIDevice currentDevice].systemVersion]],
-        [DOGlobalAppearance secondarySubtitleString:@"Sonekk JB 1.0"],
+        [DOGlobalAppearance secondarySubtitleString:@"Sonekk 1.0"],
     ]];
     [stackView addArrangedSubview:_headerView];
     [NSLayoutConstraint activateConstraints:@[
@@ -168,8 +170,8 @@
 }
 
 - (UIImage *)wordmarkImage {
-    NSString *text = @"Sonekk JB";
-    UIFont *font = [UIFont systemFontOfSize:34 weight:UIFontWeightHeavy];
+    NSString *text = @"Sonekk";
+    UIFont *font = [UIFont systemFontOfSize:36 weight:UIFontWeightHeavy];
     NSDictionary *attributes = @{
         NSFontAttributeName : font,
         NSForegroundColorAttributeName : [UIColor whiteColor],
@@ -210,7 +212,7 @@
 }
 
 - (void)showAbout {
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Sonekk JB 1.0"
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Sonekk 1.0"
                                                                    message:@"Prepares the session and opens Nyxian Clean."
                                                             preferredStyle:UIAlertControllerStyleAlert];
     [alert addAction:[UIAlertAction actionWithTitle:@"Done" style:UIAlertActionStyleDefault handler:nil]];
